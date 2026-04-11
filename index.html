@@ -37,7 +37,7 @@
 	<div class="action">
 		<button id="apply">apply</button>
 		<button id="del">del</button>
-		<button id="down">down</button>
+		<button id="down"">down</button>
 		<button id="btncount"></button>
 		<button id = "check">-</button>
 	</div>
@@ -55,77 +55,69 @@
 	<div id ="pop" class="none"></div>
 </div>
 
-<script src="js/Q1.js"></script>
-<script src="js/NewTags.js"></script>
+<!--script src="js/Q1.js"></script>
+<script src="js/NewTags.js"></script-->
 <script src="js/template.js"></script>
-<script>
+<script type="module">
 
 	// Initialize Firebase
-	const app = initializeApp(firebaseConfig);
-	// Khởi tạo Firebase
-	const db = getFirestore(app);
-	// Gắn db vào window để main.js dùng được
+	firebase.initializeApp(firebaseConfig);
+	const db = firebase.firestore();
 	window.db = db;
 	
 	let Qobject, oQ, nQ, Quotesleft, Qi;
 	let Card, TCard, TGroup;
-	let CloneEls, ActiveEls, CardEls;
+	let TempCardArr,TempTCard, TempTGroup, TempoQ, TempnQ;
+	let CloneEls, ActiveEls, CardEls, CardIds, ActiveIds;
 	let CloneObj = {}, ActiveObj = {}, CardObj = {};		
 	let CloneArr = [], ActiveArr = [], ActiveCard = [];
 
 
 	document.getElementById("del").addEventListener("click", () => {		
 		const QuotesSets = db.collection("QuotesSets");
-		QuotesSets.doc("oldpart0").update({ // Cập nhật document "oldpart0"
-			oldpart0: firebase.firestore.FieldValue.arrayRemove(oQ[Qi]) // xóa phần tử tại vị trí Qi
+		oQ.splice(Qi, 1);
+		QuotesSets.doc("oldQ").set({
+			oldQ: JSON.stringify(oQ)
 		});
 		reload();
 	});	
-	document.getElementById("down").onclick = async () => {
-		const QuotesSets = db.collection("QuotesSets");
+async function downloadQuotesSets() {
+  const QuotesSets = db.collection("QuotesSets");
 
-		try {
-			// Lấy document newQ
-			const newQDoc = await QuotesSets.doc("newQ").get();
-			const nQ = newQDoc.exists ? newQDoc.data().newQ : [];
+  // Lấy từng document
+  const docTags = await QuotesSets.doc("Tags").get();
+  const docNewQ = await QuotesSets.doc("newQ").get();
+  const docOldQ = await QuotesSets.doc("oldpart0").get();
 
-			// Lấy document oldpart0
-			const oldQDoc = await QuotesSets.doc("oldpart0").get();
-			const oQ = oldQDoc.exists ? oldQDoc.data().oldpart0 : [];
+  // Chuẩn bị dữ liệu
+  const exportData = {};
 
-			// Lấy document Tags
-			const tagDoc = await QuotesSets.doc("Tags").get();
-			let TGroup = [], TCard = [], Card = [];
-			if (tagDoc.exists) {
-				TGroup = tagDoc.data().TagGroup || [];
-				TCard = tagDoc.data().TagCard || [];
-				Card = tagDoc.data().CardTag || [];
-			}
+  if (docTags.exists) {
+    exportData.Tags = docTags.data();
+  }
+  if (docNewQ.exists) {
+    // Nếu bạn lưu dưới dạng chuỗi JSON thì parse lại
+    exportData.newQ = JSON.parse(docNewQ.data().newQ);
+  }
+  if (docOldQ.exists) {
+    exportData.oldQ = JSON.parse(docOldQ.data().oldpart0);
+  }
 
-			// Gom dữ liệu thành object
-			const Data = {
-				oldQ: oQ,
-				newQ: nQ,
-				TagGroup: TGroup,
-				TagCard: TCard,
-				CardTag: Card
-			};
+  // Chuyển thành chuỗi JSON đẹp
+  const jsonStr = JSON.stringify(exportData, null, 2);
 
-			// Xuất ra file JSON
-			const blob = new Blob([JSON.stringify(Data, null, 2)], { type: "application/json" });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = url;
-			a.download = "QuotesSet.json";
-			a.click();
-			URL.revokeObjectURL(url);
+  // Tạo blob và link download
+  const blob = new Blob([jsonStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
 
-		} catch (err) {
-			console.error("Lỗi khi lấy dữ liệu từ Firestore:", err);
-			alert("Không thể lấy dữ liệu từ Firestore!");
-		}
-	};
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "QuotesSets.json"; // tên file tải về
+  a.click();
 
+  URL.revokeObjectURL(url);
+};
+	document.getElementById("down").onclick = () => {downloadQuotesSets();};
 	document.getElementById("apply").onclick = () => {
 		const meaning = document.querySelector(`#meaning textarea`).value;
 		const tagEl = document.querySelectorAll("#card .active");
@@ -138,12 +130,14 @@
 			return;
 		}
 		const block = makeBlock(oQ[Qi].quotes,meaning,oQ[Qi].author,ArrEl);
+		nQ.push(block); // thêm block vào nQ của code
+		oQ.splice(Qi, 1); // bỏ phần tử i ra khỏi oQ
 		const QuotesSets = db.collection("QuotesSets");
-		QuotesSets.doc("newQ").update({ // Cập nhật document "newQ"
-			newQ: firebase.firestore.FieldValue.arrayUnion(block) // thêm phần tử mới vào mảng newQ
+		QuotesSets.doc("newQ").set({
+			newQ: JSON.stringify(nQ)
 		});
-		QuotesSets.doc("oldpart0").update({ // Cập nhật document "oldpart0"
-			oldpart0: firebase.firestore.FieldValue.arrayRemove(oQ[Qi]) // xóa phần tử tại vị trí Qi
+		QuotesSets.doc("oldQ").set({
+			oldQ: JSON.stringify(oQ)
 		});
 		reload();
 	};	
@@ -156,26 +150,36 @@
 			Tags
 		};
 	}	
-	
 
 
-	function reload(){		
+	async function load() {
 		const QuotesSets = db.collection("QuotesSets");
-		const newQRef = QuotesSets.doc("newQ");
-		newQRef.get().then((doc) => {
-			nQ = doc.data().newQ;
-		});
-		const oldQRef = QuotesSets.doc("oldpart0");
-		oldQRef.get().then((doc) => {
-			oQ = doc.data().oldpart0;
-		});
-		const TagRef = QuotesSets.doc("Tags");
-		TagRef.get().then((doc) => {
-			TGroup = doc.data().TagGroup;
-			TCard = doc.data().TagCard;
-			Card = doc.data().CardTag;
-		});
 
+		const newQRef = QuotesSets.doc("newQ");
+		const docN = await newQRef.get();
+		if (docN.exists) TempnQ = docN.data().newQ;
+
+		const oldQRef = QuotesSets.doc("oldpart0");
+		const docO = await oldQRef.get();
+		if (docO.exists) TempoQ = docO.data().oldpart0;
+
+		const docT = await QuotesSets.doc("Tags").get();
+		if (docT.exists) {
+			const data = docT.data();
+			TempTGroup = data.TagGroup;
+			TempTCard  = data.TagCard;
+			TempCardArr = data.CardTag;
+		}
+		nQ = JSON.parse(TempnQ);
+		oQ = JSON.parse(TempoQ);
+		TGroup = JSON.parse(TempTGroup);
+		TCard = JSON.parse(TempTCard);
+		Card = JSON.parse(TempCardArr);
+	}
+	// Gọi load() một lần khi trang khởi động
+	await load();
+
+	function reload(){
 		let nQarr=[];
 		let arr = [];
 		nQ.forEach(el => {
@@ -204,7 +208,7 @@
 		};		
 		
 		Quotesleft = oQ.length;
-		Qi = Math.floor(Math.random() * oQ.length);			
+		Qi = Math.floor(Math.random() * oQ.length);	
 		document.getElementById("count").innerHTML = `Còn ${Quotesleft} quotes nè	=)) Chaiyoooo`;
 		document.getElementById("Q").innerHTML = `${oQ[Qi].quotes} - ${oQ[Qi].author}`;
 		document.querySelectorAll("#unique .tag").forEach(t=>{
@@ -217,11 +221,10 @@
 		CardObj = {};		
 		CloneArr = [];
 		ActiveArr = [];
-		ActiveCard = [];		
+		ActiveCard = [];	
 	}
-	
 	reload();
-	
+
 	Object.keys(TGroup).forEach(G => {
 		document.getElementById("unique").innerHTML += `<div class="tag" id=${G}>${TGroup[G].Name}</div>`;
 		document.getElementById(`${G}`).title = TGroup[G].Title;
