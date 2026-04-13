@@ -263,6 +263,7 @@
 			t.classList.remove("active");
 		});
 		document.getElementById("card").innerHTML = ``;
+		document.getElementById("cardtag").innerHTML = ``;
 		document.querySelector(`#meaning`).value = "";
 		CloneObj = {};
 		CloneArr = [];
@@ -366,6 +367,14 @@
 			document.querySelectorAll(`.${t.id}`).forEach(el => {
 				el.remove();
 			});
+			let currentCardObj = document.querySelectorAll("#cardbox .tag");
+			currentCardObj.forEach(el => {
+				el.classList.remove("none");
+			});
+			let currentGroupObj = document.querySelectorAll("#Group .active");
+			currentGroupObj.forEach(el => {
+				el.classList.remove("active");
+			});		
 		}
 	});	
 	document.querySelector("#group").addEventListener("click", e => {
