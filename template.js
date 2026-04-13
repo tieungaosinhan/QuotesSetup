@@ -42,6 +42,19 @@ idx → index trong vòng lặp.
 node / div / span → khi muốn rõ loại thẻ DOM.
 */
 
+function checkOrientation() {
+	const body = document.body; // gán body của trang
+	if (window.innerHeight > window.innerWidth) {
+		// portrait → chặn
+		body.classList.add("portrait");
+	} else {
+		// landscape → cho xài
+		body.classList.remove("portrait");
+	}
+}
+window.addEventListener("resize", checkOrientation);
+checkOrientation();
+
 function intersect(...arrays) {
   if (arrays.length === 0) return [];
   // chuẩn hóa tất cả phần tử về lowercase + trim
@@ -91,6 +104,7 @@ function Activecolor(i){ //setup --active-color cho mọi i // color(tag,randomP
 	const btns = document.querySelectorAll(`${i}`);
 	btns.forEach(btn => {
 		// mỗi nút gán một màu ngẫu nhiên
-		btn.style.setProperty("--active-color", randomPastel(Math.random() * 0.2 + 0.3));
+		btn.style.setProperty("--active-color", randomPastel(Math.random() * 0.3 + 0.5));
 	});
 }
+
