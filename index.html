@@ -30,6 +30,9 @@
 <body>
 
 <div class="container">
+	<div id="loadingLayer">
+	Loading...
+	</div>
 	<div class="sidebar">
 		<div></div>
 		<div class="active"></div>
@@ -225,6 +228,7 @@
 
 
 	function reload(){
+		document.getElementById("loadingLayer").classList.remove("none");
 		let nQarr=[];
 		let arr = [];
 		nQ.forEach(el => {
@@ -295,6 +299,7 @@
     				setTimeout(renderChunk, 50);
    				} else {
     				Activecolor("#cardbox .tag");
+					document.getElementById("loadingLayer").classList.add("none");
 				}
 			};
 			renderChunk();
@@ -318,6 +323,7 @@
 	document.querySelector("#cardbox").addEventListener("click", e => {
 		// chỉ xử lý khi click trúng phần tử con có class "tag"
 		if (e.target.classList.contains("tag")) {
+			document.getElementById("cardtag").innerHTML = ``;
 			const t = e.target;
 			let tempid = t.id;
 			ActiveObj = document.querySelectorAll("#card .tag");
