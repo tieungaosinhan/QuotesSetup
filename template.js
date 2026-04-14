@@ -55,6 +55,14 @@ function checkOrientation() {
 window.addEventListener("resize", checkOrientation);
 checkOrientation();
 
+function makeCountMap(arr) { //Trả về: arr{key: count}
+	return arr.reduce((acc, item) => {
+		acc[item] = (acc[item] || 0) + 1;
+		return acc;
+	}, {});
+}
+
+
 function intersect(...arrays) {
   if (arrays.length === 0) return [];
   // chuẩn hóa tất cả phần tử về lowercase + trim
