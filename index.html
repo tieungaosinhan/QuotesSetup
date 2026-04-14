@@ -23,6 +23,10 @@
 			messagingSenderId: "159414617772",
 			appId: "1:159414617772:web:0a246068fdd8303a4c4109"
 		};
+		// Initialize Firebase
+		firebase.initializeApp(firebaseConfig);
+		const db = firebase.firestore();
+		window.db = db;
 	</script>
 	<style>
 	</style>
@@ -64,97 +68,8 @@
 	</div>	
 </div>
 </div>
-<!--script src="js/Q1.js"></script>
-<script src="js/NewTags.js"></script-->
 <script src="js/template.js"></script>
 <script type="module">
-
-	// Initialize Firebase
-	firebase.initializeApp(firebaseConfig);
-	const db = firebase.firestore();
-	window.db = db;
-	
-	let Qobject, oQ, nQ, Quotesleft, Qi;
-	let Card, TCard, TGroup;
-	let TempCardArr,TempTCard, TempTGroup, TempoQ, TempnQ;
-	let CloneEls, ActiveEls, CardEls, CardIds, ActiveIds;
-	let CloneObj = {}, ActiveObj = {}, CardObj = {};		
-	let CloneArr = [], ActiveArr = [], ActiveCard = [];
-	let TagArr = [], GroupArr = [];
-
-
-	document.getElementById("del").addEventListener("click", () => {		
-		const QuotesSets = db.collection("QuotesSets");
-		oQ.splice(Qi, 1);
-		QuotesSets.doc("oldpart0").set({
-			oldQ: JSON.stringify(oQ)
-		});
-		reload();
-	});	
-	async function downloadQuotesSets() {
-		const QuotesSets = db.collection("QuotesSets");
-
-		// Lấy từng document
-		const docTags = await QuotesSets.doc("Tags").get();
-		const docNewQ = await QuotesSets.doc("newQ").get();
-		const docOldQ = await QuotesSets.doc("oldpart0").get();
-
-		// Chuẩn bị dữ liệu
-		const exportData = {};
-
-		if (docTags.exists) {
-			exportData.Tags = docTags.data();
-		}
-		if (docNewQ.exists) {
-			// Nếu bạn lưu dưới dạng chuỗi JSON thì parse lại
-			exportData.newQ = JSON.parse(docNewQ.data().newQ);
-		}
-		if (docOldQ.exists) {
-			exportData.oldQ = JSON.parse(docOldQ.data().oldQ);
-		}
-
-		// Chuyển thành chuỗi JSON đẹp
-		const jsonStr = JSON.stringify(exportData, null, 2);
-
-		// Tạo blob và link download
-		const blob = new Blob([jsonStr], { type: "application/json" });
-		const url = URL.createObjectURL(blob);
-
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = "QuotesSets.json"; // tên file tải về
-		a.click();
-
-		URL.revokeObjectURL(url);
-	};
-	document.getElementById("down").onclick = () => {downloadQuotesSets();};
-	document.getElementById("apply").onclick = () => {
-		const meaning = document.querySelector(`#meaning`).value;
-		const tagEl = document.querySelectorAll("#card .tag");
-		const ArrEl = [];
-		tagEl.forEach(el => {
-			ArrEl.push(el.id);
-		});
-		if (ArrEl.length === 0 || meaning === "") {
-			alert("Thiếu Data");
-			return;
-		}
-		const block = makeBlock(oQ[Qi].quotes,meaning,oQ[Qi].author,ArrEl);
-		nQ.push(block); // thêm block vào nQ của code
-		oQ.splice(Qi, 1); // bỏ phần tử i ra khỏi oQ
-		const QuotesSets = db.collection("QuotesSets");
-		QuotesSets.doc("newQ").set({ // Ở QuotesSets, vào doc tên là new Q
-			newQ: JSON.stringify(nQ) // ghi đè lên đó
-		});
-		QuotesSets.doc("oldpart0").set({ //Ở QuotesSets, vào doc tên là oldQ
-			oldQ: JSON.stringify(oQ)
-		});
-		reload();
-	};	
-	document.getElementById("add").onclick = () => {
-		document.getElementById("del").classList.add("none");
-		document.getElementById("Q").innerHTML = `<textarea placeholder="Nhập quote mới"></textarea><br><span><input placeholder="Tên tác giả"><button class="quoteAdd">OK</button></span>`;
-	};
 	
 	document.querySelector("#Q").addEventListener("click", e => {
 		// chỉ xử lý khi click trúng phần tử con có class "tag"
@@ -200,125 +115,225 @@
 	Activecolor(`.resultbox *`);
 	Activecolor(`.sidebar *`);
 
-	async function load() {
-		const QuotesSets = db.collection("QuotesSets");
-
-		const newQRef = QuotesSets.doc("newQ");
-		const docN = await newQRef.get();
-		if (docN.exists) TempnQ = docN.data().newQ;
-
-		const oldQRef = QuotesSets.doc("oldpart0");
-		const docO = await oldQRef.get();
-		if (docO.exists) TempoQ = docO.data().oldQ;
-		const docT = await QuotesSets.doc("Tags").get();
-		if (docT.exists) {
-			const data = docT.data();
-			TempTGroup = data.TagGroup;
-			TempTCard	= data.TagCard;
-			TempCardArr = data.CardTag;
-		}
-		nQ = JSON.parse(TempnQ);
-		oQ = JSON.parse(TempoQ);
-		TGroup = JSON.parse(TempTGroup);
-		TCard = JSON.parse(TempTCard);
-		Card = JSON.parse(TempCardArr);
-	}
-	// Gọi load() một lần khi trang khởi động
-	await load();
 
 
-	function reload(){
-		document.getElementById("loadingLayer").classList.remove("none");
-		let nQarr=[];
-		let arr = [];
-		nQ.forEach(el => {
-			el.Tags.forEach(add => {
-				arr.push(add);
-			});
-		});
-		let countCard = {};
-		let countArr = [...new Set(arr)].sort();
-		Object.keys(Card).forEach(C => {
-			let count = 0;
-			countArr.forEach(a => {
-				if (a === C) {
-					count ++;
-				};
-				countCard[C] = count;
-			});
-		});
-		document.getElementById("btncount").innerHTML = countArr.length;//Số lượng 
-		document.getElementById("btncount").onclick = () => {
-			const tempElement = document.querySelectorAll("#cardbox .tag");
-			// Thêm class .temp
-			tempElement.forEach( el => {
-				countArr.forEach(e => {
-					if (e == el.id) el.classList.add("temp");
-				});
-				// Sau 1 phút thì gỡ class .temp
-				setTimeout(() => {
-					el.classList.remove("temp");
-				}, 30000); // 30000 ms = 0.5 phút
-			});
-		};		
-		Quotesleft = oQ.length;
-		Qi = Math.floor(Math.random() * oQ.length);	
-		document.getElementById("count").innerHTML = `Còn <span style="color:brown; font-weight:bold;">${Quotesleft}</span> quotes nè =)) Chaiyoooo`;
-		document.getElementById("Q").innerHTML = `${oQ[Qi].quotes}<br><span>${oQ[Qi].author}</span>`;
-		document.querySelectorAll("#unique .tag").forEach(t=>{
-			t.classList.remove("active");
-		});
-		document.getElementById("card").innerHTML = ``;
-		document.getElementById("cardtag").innerHTML = ``;
-		document.querySelector(`#meaning`).value = "";
-		CloneObj = {};
-		CloneArr = [];
-		ActiveObj = {};
-		ActiveArr = [];
-		CardObj = {};		
-		ActiveCard = [];	
-		ChunkCardbox()
-	}
-	reload();
-	function ChunkCardbox() {
-		setTimeout(() => {
-			const keys = Object.keys(Card);
-			let i = 0;
-			const step = 1; // mỗi lần render 20 div
+let Qobject, oQ, nQ, Quotesleft, Qi;
+let Card, TCard, TGroup;
+let TempCardArr,TempTCard, TempTGroup, TempoQ, TempnQ;
+let CloneEls, ActiveEls, CardEls, CardIds, ActiveIds;
+let CloneObj = {}, ActiveObj = {}, CardObj = {};		
+let CloneArr = [], ActiveArr = [], ActiveCard = [];
+let TagArr = [], GroupArr = [];
 
-			function renderChunk() {
-				const box = document.getElementById("cardbox");
-				for (let j = 0; j < step && i < keys.length; j++, i++) {
-					const card = keys[i];
-					box.innerHTML += `<div class="tag" id="${card}">${Card[card].Name}</div>`;
-				}
-				if (i < keys.length) {
-					setTimeout(renderChunk, 50); // tiếp tục sau 50ms
-				}
-				if (i < keys.length) {
-    				setTimeout(renderChunk, 50);
-   				} else {
-    				Activecolor("#cardbox .tag");
-					document.getElementById("loadingLayer").classList.add("none");
-				}
-			};
-			renderChunk();
-		}, 500);
-		Activecolor(`#cardbox .tag`);
-	}	
 	
-	Object.keys(TGroup).forEach(group => {
-		document.getElementById("group").innerHTML += `<div class="keytag" id="${group}">#${group}</div>`;
-	});
-	Activecolor(`.keytag`);
+async function load() {
+	const QuotesSets = db.collection("QuotesSets");
 
-	document.getElementById("reload").onclick = () => {reload();};
-	document.querySelector(".sidebar div").addEventListener("click", e => {
-		document.querySelectorAll(".sidebar div").forEach(div => {
-			div.classList.toggle("active");
-		});
-		document.querySelector(".container").classList.toggle("push");
+	const newQRef = QuotesSets.doc("newQ");
+	const docN = await newQRef.get();
+	if (docN.exists) TempnQ = docN.data().newQ;
+
+	const oldQRef = QuotesSets.doc("oldpart0");
+	const docO = await oldQRef.get();
+	if (docO.exists) TempoQ = docO.data().oldQ;
+	const docT = await QuotesSets.doc("Tags").get();
+	if (docT.exists) {
+		const data = docT.data();
+		TempTGroup = data.TagGroup;
+		TempTCard	= data.TagCard;
+		TempCardArr = data.CardTag;
+	}
+	nQ = JSON.parse(TempnQ);
+	oQ = JSON.parse(TempoQ);
+	TGroup = JSON.parse(TempTGroup);
+	TCard = JSON.parse(TempTCard);
+	Card = JSON.parse(TempCardArr);
+}
+// Gọi load() một lần khi trang khởi động
+await load();
+
+document.getElementById("add").onclick = () => {
+	document.getElementById("del").classList.add("none");
+	document.getElementById("Q").innerHTML = `<textarea placeholder="Nhập quote mới"></textarea><br><span><input placeholder="Tên tác giả"><button class="quoteAdd">OK</button></span>`;
+};
+	
+document.getElementById("del").addEventListener("click", () => {		
+	const QuotesSets = db.collection("QuotesSets");
+	oQ.splice(Qi, 1);
+	QuotesSets.doc("oldpart0").set({
+		oldQ: JSON.stringify(oQ)
 	});
+	reload();
+});	
+	
+document.getElementById("apply").onclick = () => {
+	const meaning = document.querySelector(`#meaning`).value;
+	const tagEl = document.querySelectorAll("#card .tag");
+	const ArrEl = [];
+	tagEl.forEach(el => {
+		ArrEl.push(el.id);
+	});
+	if (ArrEl.length === 0 || meaning === "") {
+		alert("Thiếu Data");
+		return;
+	}
+	const block = makeBlock(oQ[Qi].quotes,meaning,oQ[Qi].author,ArrEl);
+	nQ.push(block); // thêm block vào nQ của code
+	oQ.splice(Qi, 1); // bỏ phần tử i ra khỏi oQ
+	const QuotesSets = db.collection("QuotesSets");
+	QuotesSets.doc("newQ").set({ // Ở QuotesSets, vào doc tên là new Q
+		newQ: JSON.stringify(nQ) // ghi đè lên đó
+	});
+	QuotesSets.doc("oldpart0").set({ //Ở QuotesSets, vào doc tên là oldQ
+		oldQ: JSON.stringify(oQ)
+	});
+	reload();
+};	
+	
+async function downloadQuotesSets() {
+	const QuotesSets = db.collection("QuotesSets");
+
+	// Lấy từng document
+	const docTags = await QuotesSets.doc("Tags").get();
+	const docNewQ = await QuotesSets.doc("newQ").get();
+	const docOldQ = await QuotesSets.doc("oldpart0").get();
+
+	// Chuẩn bị dữ liệu
+	const exportData = {};
+
+	if (docTags.exists) exportData.Tags = docTags.data();
+	if (docNewQ.exists) exportData.newQ = JSON.parse(docNewQ.data().newQ);
+	if (docOldQ.exists) exportData.oldQ = JSON.parse(docOldQ.data().oldQ);
+
+	// Chuyển thành chuỗi JSON đẹp
+	const jsonStr = JSON.stringify(exportData, null, 2);
+
+	// Tạo blob và link download
+	const blob = new Blob([jsonStr], { type: "application/json" });
+	const url = URL.createObjectURL(blob);
+
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = "QuotesSets.json"; // tên file tải về
+	a.click();
+
+	URL.revokeObjectURL(url);
+};
+document.getElementById("down").onclick = downloadQuotesSets;
+
+
+function firstUI(){	
+	Qi = Math.floor(Math.random() * oQ.length);	
+	document.getElementById("count").innerHTML = `Còn <span style="color:brown; font-weight:bold;">${oQ.length}</span> quotes nè =)) Chaiyoooo`;
+	document.getElementById("Q").innerHTML = `${oQ[Qi].quotes}<br><span>${oQ[Qi].author}</span>`;
+	document.getElementById("group").innerHTML = ``;
+
+	const fragment = document.createDocumentFragment();
+	Object.keys(TGroup).forEach(group => {
+		const div = document.createElement("div");
+		div.className = "keytag";
+		div.id = group;
+		div.textContent = `#${group}`;
+		div.title = TGroup[group].Title;
+		fragment.appendChild(div);
+	});
+	document.getElementById("group").appendChild(fragment);
+	
+	Activecolor(`.keytag`);
+}
+function resetState() {
+	CloneObj = {};
+	CloneArr = [];
+	ActiveObj = {};
+	ActiveArr = [];
+	CardObj = {};
+	ActiveCard = [];
+}
+function resetUI() {
+	document.getElementById("card").innerHTML = "";
+	document.getElementById("cardtag").innerHTML = "";
+	document.querySelector("#meaning").value = "";
+}
+function ChunkCardbox() { // reset card
+	const keys = Object.keys(Card);
+	let i = 0;
+	const step = 1; // mỗi lần render 5 div
+	const arr = nQ.flatMap(el => el.Tags);
+	const countMap = makeCountMap(arr); // tính trước số lần xuất hiện
+	const box = document.getElementById("cardbox");
+	box.innerHTML = ``;
+	function renderChunk() {
+		
+		const fragment = document.createDocumentFragment();
+
+		for (let j = 0; j < step && i < keys.length; j++, i++) {
+			const card = keys[i];
+
+			// tạo div
+			const div = document.createElement("div");
+			div.className = "tag";
+			div.id = card;
+			div.textContent = Card[card].Name;
+
+			// gán title: count + danh sách Tags
+			const count = countMap[card] || 0;
+			let temptitle = `Count: ${count}`;
+			Card[card].Tags.forEach(t => {
+				temptitle += `, ${TCard[t].Title}`;
+			});
+			div.title = temptitle;
+
+			fragment.appendChild(div);
+		}
+
+		box.appendChild(fragment);
+
+		if (i < keys.length) {
+			setTimeout(renderChunk, 1);
+		} else {
+			Activecolor("#cardbox .tag");
+			document.getElementById("loadingLayer").classList.add("none");
+		}
+	}
+
+	renderChunk();
+	Activecolor(`#cardbox .tag`);
+}
+
+function reload(){
+	document.getElementById("loadingLayer").classList.remove("none");
+	let nQarr=[];
+	let arr = nQ.flatMap(el => el.Tags);
+	let countArr = [...new Set(arr)].sort();
+
+	document.getElementById("btncount").innerHTML = countArr.length;
+	document.getElementById("btncount").onclick = () => {
+		const tempElements = document.querySelectorAll("#cardbox .tag");
+		tempElements.forEach(el => {
+			// Nếu id chưa từng xuất hiện trong arr thì thêm class .temp
+			if (!countArr.includes(el.id)) {
+				el.classList.add("temp");
+				setTimeout(() => el.classList.remove("temp"), 30000);
+			}
+		});
+	};
+
+	resetUI();
+	resetState();
+	
+	firstUI();
+	ChunkCardbox()
+}
+reload();	
+document.getElementById("reload").onclick = reload;
+
+document.querySelector(".sidebar").addEventListener("click", e => {
+	document.querySelectorAll(".sidebar div").forEach(div => {
+		div.classList.toggle("active");
+	});
+	document.querySelector(".container").classList.toggle("push");
+});
+
 
 	document.querySelector("#cardbox").addEventListener("click", e => {
 		// chỉ xử lý khi click trúng phần tử con có class "tag"
@@ -415,6 +430,7 @@
 	});
 
 </script>
+
 
 </body>
 </html>
