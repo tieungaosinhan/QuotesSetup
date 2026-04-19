@@ -13,7 +13,7 @@
 	<!-- Firestore -->
 	<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 	<!--link rel="manifest" href="/site.webmanifest"-->
-	<script src="Config.js"></script>
+	<script src="FirebaseConfig.js"></script>
 	<style>
 	</style>
 </head>
@@ -98,7 +98,7 @@ function setRecObj() {
 function firstUI(){	
 	setRecObj();
 	Qi = Math.floor(Math.random() * Old.length);	
-	document.getElementById("btncount").innerHTML = `${ZeroCount}/${CardName.length}`;
+	document.getElementById("btncount").innerHTML = `0/${CardName.length}`;
 	
 	document.getElementById("count").innerHTML = `Còn <span style="color:brown; font-weight:bold;">${Old.length}</span> quotes nữa thôi nè =)) Chaiyoooo`;
 	document.getElementById("Q").innerHTML = `${Old[Qi].quotes}<br><span>${Old[Qi].author}</span>`;
@@ -284,6 +284,7 @@ document.querySelector("#relatetag").addEventListener("click", e => {
 		});
 		document.getElementById("cardbox").innerHTML = ``;
 		renderCard(FinalArr);
+		document.getElementById("btncount").innerHTML = `${FinalArr.length}/${CardName.length}`;
 		const temp = document.querySelectorAll("#cardbox .tag");
 		temp.forEach(t => {
 			t.classList.add("active");
