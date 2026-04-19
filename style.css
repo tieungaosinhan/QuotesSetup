@@ -98,7 +98,7 @@ body{
 	right: 2.5vw;
 	bottom: -1.5vh;
 	display: block;
-	width: 10vw;
+	width: 5vw;
 	height: 3vh;
 	display: inline-block;
 	line-height: 2vh;
@@ -113,7 +113,7 @@ body{
 	right: 12.5vw;
 	bottom: -1.5vh;
 	display: block;
-	width: 10vw;
+	width: 5vw;
 	height: 3vh;
 	display: inline-block;
 	line-height: 2vh;
@@ -122,6 +122,14 @@ body{
 	opacity: 0.4;
 	cursor: pointer;
 	border: thin solid rgba(0,0,0,0.5);
+}
+.portrait #del{
+	width: 10vw;
+}
+
+.portrait #add{
+	width: 10vw;
+	right: 12vw;
 }
 #del:hover{
 	opacity: 0.8;
