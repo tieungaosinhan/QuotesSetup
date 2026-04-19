@@ -55,6 +55,25 @@ function checkOrientation() {
 window.addEventListener("resize", checkOrientation);
 checkOrientation();
 
+function deepCheckUndefined(obj, path = "") {
+  if (Array.isArray(obj)) {
+    obj.forEach((item, idx) => {
+      if (item === undefined) {
+        console.warn(`Array ${path}[${idx}] = undefined`);
+      } else {
+        deepCheckUndefined(item, `${path}[${idx}]`);
+      }
+    });
+  } else if (typeof obj === "object" && obj !== null) {
+    for (const key in obj) {
+      if (obj[key] === undefined) {
+        console.warn(`Field ${path}.${key} = undefined`);
+      } else {
+        deepCheckUndefined(obj[key], `${path}.${key}`);
+      }
+    }
+  }
+}
 function makeCountMap(arr) { //Trả về: arr{key: count}
 	return arr.reduce((acc, item) => {
 		acc[item] = (acc[item] || 0) + 1;
@@ -62,7 +81,13 @@ function makeCountMap(arr) { //Trả về: arr{key: count}
 	}, {});
 }
 
-
+function ArrCheck(arr) {
+	if (Array.isArray(arr)) {
+		console.log("Là array!");
+	} else {
+	console.log("Không phải array.");
+	}
+}
 function intersect(...arrays) {
   if (arrays.length === 0) return [];
   // chuẩn hóa tất cả phần tử về lowercase + trim
@@ -97,22 +122,22 @@ function toggleElement(arr, l) { //Check arr có l hay chưa, có thì thêm, ko
 	return arr;
 }
 
-function randomPastel(alpha = 1) {
-  // tạo màu pastel bằng cách giữ giá trị RGB cao (sáng, nhạt)
+function randomPastel(alpha = 0.5) {
+  // tạo màu pastel bằng cách random trong khoảng sáng
   const r = Math.floor(Math.random() * 127 + 127); // 127–254
   const g = Math.floor(Math.random() * 127 + 127);
   const b = Math.floor(Math.random() * 127 + 127);
 
-  // alpha là độ trong suốt (0–1), mặc định = 1
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 
-function Activecolor(i){ //setup --active-color cho mọi i // color(tag,randomPastel());
+
+function Activecolor(i,alpha = 0.5){ //setup --active-color cho mọi i // color(tag,randomPastel());
 	const btns = document.querySelectorAll(`${i}`);
 	btns.forEach(btn => {
 		// mỗi nút gán một màu ngẫu nhiên
-		btn.style.setProperty("--active-color", randomPastel(Math.random() * 0.3 + 0.5));
+		btn.style.setProperty("--active-color", randomPastel(alpha));
 	});
 }
 
