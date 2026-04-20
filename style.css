@@ -110,7 +110,7 @@ body{
 }
 #add{
 	position: absolute;
-	right: 12.5vw;
+	right: 7.5vw;
 	bottom: -1.5vh;
 	display: block;
 	width: 5vw;
@@ -129,7 +129,7 @@ body{
 
 .portrait #add{
 	width: 10vw;
-	right: 12vw;
+	right: 12.5vw;
 }
 #del:hover{
 	opacity: 0.8;
