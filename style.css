@@ -123,14 +123,6 @@ body{
 	cursor: pointer;
 	border: thin solid rgba(0,0,0,0.5);
 }
-.portrait #del{
-	width: 10vw;
-}
-
-.portrait #add{
-	width: 10vw;
-	right: 12.5vw;
-}
 #del:hover{
 	opacity: 0.8;
 	box-shadow: inset 0 0 2vw var(--active-color);
@@ -317,6 +309,9 @@ body{
 }
 .keytag.active {
     background-color: var(--active-color)
+}
+.keytag.temp {
+    box-shadow: inset 0 0 2vw rgba(0, 0, 0, 0.5);
 }
 #loadingLayer {
     position: fixed;
