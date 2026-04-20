@@ -50,7 +50,7 @@
 </div>
 </div>
 <div id="down"></div>
-<script src="template.js"></script>
+<script src="emplate.js"></script>
 <script type="module">
 	const myCollection = `QuoteSet`; // tên collection trong Firestore AppProject || QuoteSet
 	let oQ = {}, nQ = {}, Tags = {}, Card = {}, CardInfo = {}, recObj = {}; // Object
@@ -81,11 +81,12 @@
 		CardName.push(key);
 		Card[key] = [...new Set(Object.values(CardInfo[key].tags).flat())];
 	});
+	
+
+function setRecObj() {	
 	CardName.forEach(c => {
 		recObj[c] = 0;
 	});
-
-function setRecObj() {	
 	New.forEach(q => {
 		q.Card.forEach(t => {
 			if (recObj.hasOwnProperty(t)) {
@@ -100,7 +101,7 @@ function firstUI(){
 	Qi = Math.floor(Math.random() * Old.length);	
 	document.getElementById("btncount").innerHTML = `0/${CardName.length}`;
 	
-	document.getElementById("count").innerHTML = `Còn <span style="color:brown; font-weight:bold;">${Old.length}</span> quotes nữa thôi nè =)) Chaiyoooo`;
+	document.getElementById("count").innerHTML = `Được <span style="color:brown; font-weight:bold;">${New.length}</span> quotes rồi. Còn <span style="color:brown; font-weight:bold;">${Old.length}</span> nữa thôi. Chaiyoooo`;
 	document.getElementById("Q").innerHTML = `${Old[Qi].quotes}<br><span>${Old[Qi].author}</span>`;
 	document.getElementById("Question").innerHTML = ``;
 
@@ -140,6 +141,24 @@ function renderCard(arr) {
 	});
 	document.getElementById("cardbox").appendChild(fragment);	
 	Activecolor(`.tag`,0.5);
+	document.querySelector("#cardbox").addEventListener("click", e => {
+		// chỉ xử lý khi click trúng phần tử con có class "tag"
+		let el = e.target;
+		if (el.classList.contains("tag")) {
+			const tid = el.id;
+			const tempElements = document.querySelectorAll(".keytag");
+			tempElements.forEach(e => {
+				let i = e.id;
+				// Nếu id chưa từng xuất hiện trong arr thì thêm class .temp
+				if (CardInfo[tid].core.includes(i)) {
+					e.classList.add("temp");
+					setTimeout(() => e.classList.remove("temp"), 10000);
+				}
+			});
+		};
+	});
+	let html = (arr.length === CardName.length) ? `0/${CardName.length}` : `${arr.length}/${CardName.length}`;
+	document.getElementById("btncount").innerHTML = `${html}`;
 };
 
 function reload() {
@@ -172,16 +191,7 @@ document.querySelector(".sidebar").addEventListener("click", e => {
 	document.querySelector(".sidebar").classList.toggle("active");
 	document.querySelector(".container").classList.toggle("push");
 });
-document.getElementById("btncount").onclick = () => {
-	const tempElements = document.querySelectorAll("#cardbox .tag");
-	tempElements.forEach(el => {
-		let id = el.id;
-		if(recObj[id] == 0) {
-			el.classList.add("temp");
-			setTimeout(() => el.classList.remove("temp"), 30000);
-		};
-	});
-};
+
 document.querySelector("#Q").addEventListener("click", e => {
 	// chỉ xử lý khi click trúng phần tử con có class "quoteAdd"
 	if (e.target.classList.contains("quoteAdd")) {
@@ -208,6 +218,20 @@ document.querySelector("#Q").addEventListener("click", e => {
 		document.getElementById("loadingLayer").classList.add("none");	
 	}
 });		
+
+function compareCard() {
+	Object.keys(Card).forEach(card => {
+		if (TagArr.every(el => Card[card].includes(el))) {
+			if (!FinalArr.includes(card)) {
+				FinalArr.push(card);
+			}
+		};			
+	});
+	if (TagArr === []){
+		renderCard(CardName)
+	} else renderCard(FinalArr);
+};
+
 function setupkeytag() {
 	document.querySelectorAll(".keytag").forEach(btn => {
 		btn.addEventListener("click", e => {
@@ -218,7 +242,13 @@ function setupkeytag() {
 				el.classList.remove("active");
 				const removable = document.querySelectorAll(".tag");
 				removable.forEach(e => {
-					if (e.classList.contains(`${id}`)) e.remove();
+					if (e.classList.contains(`${id}`)) {
+						let tid = e.id;
+						FinalArr = [];
+						TagArr = TagArr.filter(item => item !== tid);
+						compareCard();
+						e.remove();
+					}
 				});
 			} else{
 				if (ac >1) {
@@ -256,6 +286,9 @@ document.querySelector("#relatetag").addEventListener("click", e => {
 			if (index !== -1) {
 				TagArr.splice(index, 1); // xoá phần tử tại vị trí index
 			}
+			if (index === -1) {
+				TagArr = []; // xoá phần tử tại vị trí index
+			}
 			Object.keys(Card).forEach(card => {
 				if (TagArr.every(el => Card[card].includes(el))) {
 					if (!FinalArr.includes(card)) {
@@ -275,16 +308,8 @@ document.querySelector("#relatetag").addEventListener("click", e => {
 			TagArr.push(id);
 		};
 		
-		Object.keys(Card).forEach(card => {
-			if (TagArr.every(el => Card[card].includes(el))) {
-				if (!FinalArr.includes(card)) {
-					FinalArr.push(card);
-				}
-			};			
-		});
 		document.getElementById("cardbox").innerHTML = ``;
-		renderCard(FinalArr);
-		document.getElementById("btncount").innerHTML = `${FinalArr.length}/${CardName.length}`;
+		compareCard();
 		const temp = document.querySelectorAll("#cardbox .tag");
 		temp.forEach(t => {
 			t.classList.add("active");
@@ -320,8 +345,15 @@ document.getElementById("apply").addEventListener("click", async () => {
 	const d = newSnap.data();
 	const oldSnap = await oldDoc.get();
 	const f = oldSnap.data();
+	const TransCollection = db.collection(`AppProject`); // truy cập collection
+	const TransDoc = TransCollection.doc(`Quotes`); // truy cập document
+	const TransdocSnap = await TransDoc.get();
+	
+	await TransDoc.set({Quotes: New}); // Chỉ update key cần thiết - Doc.update(data) nếu là object
+	alert("Trans, Done.");
 	reload();
 });
+
 document.getElementById("del").addEventListener("click", async () => {
 	document.getElementById("loadingLayer").classList.remove("none");
 	Old.splice(Qi,1);
