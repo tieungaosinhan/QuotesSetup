@@ -182,6 +182,7 @@ function createblock(Author, En, Vi, Card){
 
 document.getElementById("add").onclick = () => {
 	document.getElementById("del").classList.add("none");
+	document.getElementById("add").classList.add("none");
 	document.getElementById("Q").innerHTML = `<textarea placeholder="Nhập quote mới"></textarea><br><span><input placeholder="Tên tác giả"><button class="quoteAdd">OK</button></span>`;
 };
 	
@@ -215,6 +216,7 @@ document.querySelector("#Q").addEventListener("click", e => {
 		document.getElementById("count").innerHTML = `Còn <span style="color:brown; font-weight:bold;">${Old.length}</span> quotes nữa thôi nè =)) Chaiyoooo`;
 		document.getElementById("Q").innerHTML = `${Old[Qi].quotes}<br><span>${Old[Qi].author}</span>`;
 		document.getElementById("del").classList.remove("none");
+		document.getElementById("add").classList.remove("none");
 		document.getElementById("loadingLayer").classList.add("none");	
 	}
 });		
